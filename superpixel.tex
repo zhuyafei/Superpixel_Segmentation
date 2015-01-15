@@ -211,9 +211,9 @@
 
 图像分割是指按照一定的相似性准则将图像划分为具有特殊语义的不同区域，其研究最早可以追溯至20世纪60年代，已历经几十年的发展，图像分割作为计算机视觉领域的基本问题，是图像理解的重要组成部分。与此同时，它在图像处理、模式识别和人工智能等多个领域也扮演了关键的角色。
 
-目前对图像的处理大多以像素为单位，用二维矩阵来表示一幅图像，并未考虑像素之间的空间组织关系，这使得算法处理效率过低。2003年，Ren等人~\cite{1}最早提出了超像素这一概念，所谓超像素，是指具有相似纹理、颜色、亮度等特征的相邻像素构成的图像块。它利用像素之间特征的相似程度将像素分组，可以获取图像的冗余信息，在很大程度上降低了后续图像处理任务的复杂度。
+目前对图像的处理大多以像素为单位，用二维矩阵来表示一幅图像，并未考虑像素之间的空间组织关系，这使得算法处理效率过低。2003年，Ren等人~\cite{fukunaga1975estimation}最早提出了超像素这一概念，所谓超像素，是指具有相似纹理、颜色、亮度等特征的相邻像素构成的图像块。它利用像素之间特征的相似程度将像素分组，可以获取图像的冗余信息，在很大程度上降低了后续图像处理任务的复杂度。
 
-超像素生成算法大致可分为基于图论的方法、基于梯度上升的方法两类~\cite{4} 。
+超像素生成算法大致可分为基于图论的方法、基于梯度上升的方法两类~\cite{fukunaga1975estimation} 。
 
 \section{基于图论的超像素分割方法}
 
@@ -231,27 +231,85 @@ http://cs.brown.edu/~pff/segment/
 
 \subsection{Mean-shift算法}
 
-关键词：核函数、Mean Shift向量、
+1. 看了百度文库上的这篇文章\cite{Mean Shift Introduction}后的几点收获：
 
-\subsubsection{原理}
+1）Mean Shift有两种含义，早期刚提出时Mean Shift是一个名词，指代的是偏移的均值向量。而我们现在所说的Mean Shift通常是一个动词，指的是一个迭代的步骤，即先算出当前点的偏移均值，移动该点到其偏移均值，然后以此为新的起始点，继续移动，直到满足一定的条件结束。
 
-Mean shift的含义随着理论的发展在不断发生着变化，其最初含义是偏移的均值向量，最早是由Fukunaga和Hostetler~\cite{6}在1975年的一篇关于非参数概率密度函数梯度的估计的文章中提出来的，其中Mean shift只是一个简单的表示向量的名词。
+2）几个难懂而又关键的词语：核函数、Mean Shift向量、带宽矩阵
 
-直到1995年，Cheng~\cite{7}的论文发表才引起人们的研究兴趣，掀起了研究和应用Mean Shift算法的热潮。近年来，Mean Shift算法已广泛应用于计算机视觉与模式识别领域，例如目标跟踪、图像分割、模式识别与聚类分析、滤波、信息融合、特征空间分析等。
+2. 经学习后对上述词语的理解： 
 
-Comaniciu等人~\cite{5}于2002年提出了一种无参数的、基于核密度估计的迭代算法。其基本思想如下：
+\textbf{核函数}：由网站\url{http://www.cnblogs.com/jerrylead/archive/2011/03/18/1988406.html}了解到：在机器学习领域，核函数是低维空间到高维空间的一个映射，目的是解决以下两种问题：
 
-1）给定在$d$维空间上的$n$个数据点$x_i, i = 1, \ldots, n$，
+1）分类问题中解决线性不可分的情况
+
+参考网址\url{http://www.360doc.com/content/14/0728/15/14106735_397653989.shtml}
+，详见图~\ref{fig: kernel}
+
+2）回归问题中为了更好地拟合
+
+例如如下的“线性回归”问题，特征是房子的面积$x$，这里的$x$是实数，结果$y$是房子的价格。假设我们从样本点的分布中观察到$x$和$y$符合$3$次曲线，那么我们希望使用$x$的三次多项式来逼近这些样本点，首先需要将特征$x$扩展到三维$(x, x^2, x^3)$，然后寻找特征和结果之间的模型。
+
+3. 百度文库上一篇文章\cite{mean shift understanding}后的体会：
+
+1）知道了Mean Shift最初是用来干什么的，非参数概率密度估计是估计样本数据集的概率密度分布，而非参数概率密度梯度估计则是估计样本集在哪个点在最密集，后者即是Mean Shift的作用。
 
 2）
 
-3）
+4. 看了1975年的论文“The estimation of the gradient of a density function, with applications in pattern recognition"后明白了这篇论文主要是估计样本数据的多元概率密度梯度，基本思想是：某点的概率密度梯度可以用其周围一个很小的区域内的样本观测值来估计。对样本中的每一点，需要估计出其周围$k$个点的梯度向量，$k$是固定的，这些梯度向量就叫做“k最近邻mean shift簇"，对这些mean shift向量求加权平均则得到该点的密度梯度。
+
+设$X_1, X_2, \cdots, X_N$是一组由$N$个独立同分布的$n$维随机向量组成的集合。在$X$点处密度梯度表示如下：
+\begin{align}
+\hat{\bigtriangledown}_x p_N(X) = (Nh^{n+2})^{-1}2c \sum_{X_i \in S_h(X)} (X_i - X) = \left(\frac{k}{Nv_h(X)}\right) \frac{n+2}{h^2} \left(\frac{1}{k} \sum_{X_i \in S_h(X)} (X_i - X)\right)
+\end{align}
+
+其中，
+\begin{align}
+v_h(X) \equiv {Y:(Y-X)^T(Y-X) \le h^2}
+\end{align}
+
+mean shift向量就是从密度函数梯度的非参数估计中推导获得的，取（1）式的最后一项就是就是mean shift向量
+
+\begin{align}
+M_h(X) \equiv \frac{1}{k} \sum_{X_i \in S_h(X)} (X_i-X)
+\end{align}
+
+举个例子，见\cite{mean shift example}
+
+在$d$维空间中，任选一个点，然后以这个点为圆心，$h$为半径作一个高维球。落在这个球内的所有点和圆心都会产生一个向量，向量是以圆心为起点落在球内的点位终点，然后把这些向量都相加，相加的结果就是mean shift向量。如图\ref{fig: meanshift1}所示，其中黄色箭头就是mean shift向量。
+
+再以mean shift向量的终点为圆心，再做一个高维的球。如图\ref{fig: meanshift2}所示，重复以上步骤，就可得到一个mean shift向量，如此重复下去，可以收敛到概率密度最大的地方，也就是最稠密的地方。
+
+最终结果如图\ref{fig: meanshift3}：
+
+这里有两个问题：一是怎么确定$X$周围$k$个数据点所在的区域？二是这篇文章是估计概率密度梯度的，那么在任意点$X$处其mean shift向量与梯度方向相同，一定是指向梯度上升方向吗？怎么解释？
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.5\textwidth]{meanshift1.jpg}
+\caption{初始状态}
+\label{fig: meanshift1}
+\end{figure} 
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.5\textwidth]{meanshift2.jpg}
+\caption{迭代过程}
+\label{fig: meanshift2}
+\end{figure} 
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.5\textwidth]{meanshift3.jpg}
+\caption{最终状态}
+\label{fig: meanshift3}
+\end{figure} 
 
 \subsubsection{应用}
 
 1. 梯度聚类算法
 
-如图\ref{fig:1}
+如图\ref{fig: 1}
 
 2. 
 
@@ -261,11 +319,11 @@ Comaniciu等人~\cite{5}于2002年提出了一种无参数的、基于核密度�
 
 \subsection{SLIC算法}
 
-SLIC是Simple Linear Iterative Clustering的缩写，最早由Achanta~\cite{2}于2010年6月在洛桑联邦理工学院的一次技术报告中提出。2012年经整理、完善后发表在TPAMI上~\cite{3}。其中“Linear”体现在算法复杂度$O(N)$与图像中像素个数$N$是线性关系，“Clustering"是采用k-均值聚类。
+SLIC是Simple Linear Iterative Clustering的缩写，最早由Achanta~\cite{achanta2010slic}于2010年6月在洛桑联邦理工学院的一次技术报告中提出。2012年经整理、完善后发表在TPAMI上~\cite{achanta2012slic}。其中“Linear”体现在算法复杂度$O(N)$与图像中像素个数$N$是线性关系，“Clustering"是采用k-均值聚类。
 
 SLIC是一种使用简单和易于理解的方法，是对传统的k-均值超像素分割方法的改进。两者之间主要有以下两点区别：
 
-1. SLIC优化了距离计算的数目，传统的k-均值方法中每个聚类中心的搜索范围是整幅图像，要计算该聚类中心与图像中所有像素点之间的距离，而SLIC算法只在与预设的超像素尺寸成比例的一个区域内搜索，见图\ref{fig:2}。
+1. SLIC优化了距离计算的数目，传统的k-均值方法中每个聚类中心的搜索范围是整幅图像，要计算该聚类中心与图像中所有像素点之间的距离，而SLIC算法只在与预设的超像素尺寸成比例的一个区域内搜索，见图\ref{fig: 2}。
 
 2. SLIC算法在计算聚类中心与像素点之间的距离时同时结合了颜色和空间位置两方面的信息来表征其相似度，这样可以起到控制超像素尺寸和紧密度的作用。
 
@@ -273,7 +331,7 @@ SLIC是一种使用简单和易于理解的方法，是对传统的k-均值超�
 
 a）初始化聚类中心。假设一幅彩色图像有$N$个像素点，预分割为$k$个相同尺寸的超像素，那么首先要将该彩色图像转换为CIELAB颜色空间和XY坐标下的5维特征向量，然后将图像均分为$k$个网格，网格边长为$S=\sqrt{N/k}$，k个初始聚类中心$C_i=[l_i, a_i, b_i, x_i, y_i]^T$为每个网格内色阶值最低的像素。对图像中的每一个像素点，令其与最近的聚类中心的距离$d(i)$的初始值为$\infty$。
 
-b）相似度衡量。对于每个聚类中心，逐一计算其$2S \times 2S$邻域内（如图\ref{fig:2}）各像素$i$与该类中心点的距离$D$，若$D<d(i)$，则$i$暂时归为该类，并且将$d(i)$赋值为$D$，其中
+b）相似度衡量。对于每个聚类中心，逐一计算其$2S \times 2S$邻域内（如图\ref{fig: 2}）各像素$i$与该类中心点的距离$D$，若$D<d(i)$，则$i$暂时归为该类，并且将$d(i)$赋值为$D$，其中
 \begin{align}
 d_c & =  \sqrt{(l_j-l_i)^2+(a_j-a_i)^2+(b_j-b_i)^2}\\
 d_s & =  \sqrt{(x_j-x_i)^2+(y_j-y_i)^2}\\
@@ -288,14 +346,21 @@ d）重复b）和c）直至最后收敛（$E\le threshold$）。
 \centering
 \includegraphics[width=0.6\textwidth]{1.png}
 \caption{梯度模式聚类}
-\label{fig:1}
+\label{fig: 1}
 \end{figure} 
 
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.7\textwidth]{2.png}
 \caption{传统的k-均值方法与SLIC算法搜索区域的区别}
-\label{fig:2}
+\label{fig: 2}
+\end{figure} 
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.7\textwidth]{kernel.png}
+\caption{将特征映射到高维分类变得简单}
+\label{fig: kernel}
 \end{figure} 
 
 \section{实验效果分析}
@@ -305,7 +370,7 @@ d）重复b）和c）直至最后收敛（$E\le threshold$）。
 % references
 \bibliographystyle{plain}
 
-\bibliography{template} %参考文献
+\bibliography{superpixel} %参考文献
 
 
 %%---------------------------------------------------------------------
