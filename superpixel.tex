@@ -223,8 +223,43 @@
 
 \subsection{Graph-based segmentation}
 
-Felzenszwalb等人~\cite{felzenszwalb2004efficient}
-http://cs.brown.edu/~pff/segment/
+Felzenszwalb等人~\cite{felzenszwalb2004efficient}于2004年提出了一种基于图的超像素分割方法。其代码见网站：\url{http://cs.brown.edu/~pff/segment/}
+
+算法输入：图像平滑参数$sigma$，阈值$k$，最小超像素大小min（由后处理阶段所限制），输入图像
+
+算法输出：分割后的图像
+
+步骤：
+
+1. 对输入图像的每个颜色通道进行平滑，平滑可以使聚类中的像素点更紧密地连接在一起。
+
+2. 将图像映射为图：图像中每个像素点看成是图上的一个节点，相邻的两个节点之间的连线看成是图中的边，每条边都有对应的权重，这个权重值代表了相邻节点$v_i$和$v_j$之间的不相似度（例如在亮度、颜色、位置等属性上的不同）。设图中一共有$n$个节点和$m$条边。
+
+3. 分割：对图进行分割要使同一component中的元素相似度较高，而使不同components中的元素的非相似度较高。也就是说，同一component中的节点之间的边应该有低的权值，而不同components中的节点之间的边应该有大的权值。
+
+对图中所有边进行排序
+
+建不相交森林
+
+初始化阈值
+
+对每条边，按非递减的顺序（从$q=1$到$q=m$），找到其所连接的分量：最初的分割记为S（0），即每一个节点属于一个区域。由$S^{q-1}$构造$S^q$，记第$q$条边连接的两个节点为$v_i$和$v_j$，如果在$S(q-1)$中$v_i$和$v_j$是分别属于两个区域并且第$q$条边的权重小于两个区域的区域内间距，则合并两个区域。否则令$S^q = S^{q-1}$。
+
+其中，定义区域内间距如下：
+\begin{align}
+Int(C) = \max_{c \in MST(C, E)}w(c)
+\end{align}
+
+\textbf{最小生成树}(minimum spanning tree, MST)：在一个具有几个顶点的连通图$G$中，如果存在子图$G$'包含$G$中所有顶点和一部分边，且不形成回路，则称$G'$为图$G$的生成树，代价最小生成树则称为最小生成树。
+
+定义区域间间距如下：
+\begin{align}
+Dif(C_1, C_2) = \min_{v_i \in C_1, v_j \in C_2, (v_i, v_j)\in E}w((v_i, v_j))
+\end{align}
+
+4. 后续对小分量进一步处理
+
+5. 对每个component挑选一种随机颜色用来表示以区分于其他components
 
 \section{基于梯度上升的超像素分割方法}
 
@@ -430,7 +465,20 @@ d）重复b）和c）直至最后收敛（$E\le threshold$）。
 
 \section{实验效果分析}
 
+Graph-based segmentation
 
+如图\ref{fig: GB}
+
+\begin{figure}
+  \centering 
+  \subfigure[]{ 
+    \label{fig: GB: a} %% label for first subfigure 
+    \includegraphics[width=0.4\textwidth]{GB1.jpg}} 
+  \subfigure[]{ 
+    \label{fig: GB: b} %% label for second subfigure 
+    \includegraphics[width=0.4\textwidth]{GB1.png}} 
+  \label{fig: GB} %% label for entire figure 
+\end{figure}
 % references
 \bibliographystyle{plain}
 
