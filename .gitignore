@@ -5,6 +5,7 @@
 *.log
 *.nav
 *.synctex.gz
+*.synctex.gz\(busy\)
 *.out
 *.snm
 *.toc
